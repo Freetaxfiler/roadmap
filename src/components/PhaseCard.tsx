@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Calendar, Code, Database, Cloud } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calendar, Code, Cog, Award, BookOpen } from 'lucide-react';
+
+interface DayLearning {
+  topic: string;
+  details: string;
+  aiPrompt: string;
+}
 
 interface WeekData {
   title: string;
-  days: string[];
+  days: { description: string; learning: DayLearning[] }[];
   codeExample?: string;
   language?: string;
+  tutorials?: { title: string; url: string; description?: string }[]; // Added tutorials field
 }
 
 interface PhaseCardProps {
@@ -16,9 +23,16 @@ interface PhaseCardProps {
     description: string;
     weeks_data: WeekData[];
     color: string;
-    icon: React.ReactNode;
+    icon: string; // changed from React.ReactNode to string
   };
 }
+
+const iconMap: Record<string, React.ReactNode> = {
+  Database: <Cog className="h-6 w-6" />,
+  Cloud: <Award className="h-6 w-6" />,
+  Cog: <Cog className="h-6 w-6" />,
+  Award: <Award className="h-6 w-6" />,
+};
 
 const PhaseCard: React.FC<PhaseCardProps> = ({ phase }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -53,7 +67,7 @@ const PhaseCard: React.FC<PhaseCardProps> = ({ phase }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={`p-3 rounded-lg bg-gradient-to-r ${getGradientClasses(phase.color)} text-white`}>
-              {phase.icon}
+              {iconMap[phase.icon]}
             </div>
             <div>
               <h3 className="text-xl font-bold">Phase {phase.number}: {phase.title}</h3>
@@ -85,9 +99,23 @@ const PhaseCard: React.FC<PhaseCardProps> = ({ phase }) => {
                   <div className="px-4 pb-4 space-y-3">
                     <ul className="space-y-2">
                       {week.days.map((day, dayIndex) => (
-                        <li key={dayIndex} className="text-sm flex items-start gap-2">
-                          <div className="w-2 h-2 bg-current rounded-full mt-2 opacity-60 flex-shrink-0"></div>
-                          <span>{day}</span>
+                        <li key={dayIndex} className="text-sm flex flex-col gap-1">
+                          <div className="flex items-start gap-2">
+                            <div className="w-2 h-2 bg-current rounded-full mt-2 opacity-60 flex-shrink-0"></div>
+                            <span>{typeof day === 'string' ? day : day.description}</span>
+                          </div>
+                          {/* If day has learning breakdown, show it */}
+                          {day.learning && (
+                            <ul className="ml-6 mt-1 space-y-1">
+                              {day.learning.map((item, lIdx) => (
+                                <li key={lIdx} className="flex flex-col gap-0.5">
+                                  <span className="font-medium text-gray-800">{item.topic}</span>
+                                  <span className="text-gray-600 text-xs">{item.details}</span>
+                                  <span className="text-blue-600 text-xs italic">Try in ChatGPT: "{item.aiPrompt}"</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -101,6 +129,29 @@ const PhaseCard: React.FC<PhaseCardProps> = ({ phase }) => {
                           </div>
                           <pre className="whitespace-pre-wrap text-green-400">{week.codeExample}</pre>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Tutorials Section */}
+                    {week.tutorials && week.tutorials.length > 0 && (
+                      <div className="mt-4">
+                        <div className="font-semibold mb-2 text-blue-700">Recommended Tutorials:</div>
+                        <ul className="space-y-2">
+                          {week.tutorials.map((tutorial, tIdx) => (
+                            <li key={tIdx} className="text-sm flex items-start gap-2">
+                              <a
+                                href={tutorial.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline font-medium flex items-center gap-1"
+                              >
+                                <BookOpen className="h-4 w-4 inline-block" />
+                                {tutorial.title}
+                              </a>
+                              <span className="text-gray-500 ml-2">{tutorial.description}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
